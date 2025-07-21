@@ -1,11 +1,11 @@
 # Chatbot WebSocket Demo
 
-This project provides a minimal WebSocket server and HTML client. It can be used to load test WebSocket connections for a chatbot-style application when combined with an external tool such as Gatling.
+This project provides a minimal WebSocket server and a React + Tailwind CSS client. It can be used to experiment with WebSocket connections for a chatbot-style application or to run load tests with tools such as Gatling.
 
 ## Features
 
 - Node.js server with a handcrafted WebSocket implementation.
-- Simple HTML page that connects to the server and sends messages.
+- React frontend styled with Tailwind CSS and a simple SaaS look for **Acme Healthcare**.
 
 ## Running the Server
 
@@ -13,7 +13,7 @@ This project provides a minimal WebSocket server and HTML client. It can be used
 node server.js
 ```
 
-Open your browser to `http://localhost:3000` and interact with the chatbot. Messages are echoed back with a short "AI" prefix.
+Open your browser to `http://localhost:3000` and chat with the bot. Messages are echoed back with an "AI" prefix.
 
 ## Running a Load Test
 
