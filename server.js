@@ -81,7 +81,7 @@ server.on('upgrade', (req, socket) => {
   socket.on('data', (buffer) => {
     const message = decodeMessage(buffer);
     if (!message) return;
-    const reply = `AI: you said "${message}"`;
+    const reply = `PARROT: "${message}"`;
     socket.write(encodeMessage(reply));
   });
 });
