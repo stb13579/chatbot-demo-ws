@@ -56,11 +56,29 @@ function decodeMessage(buffer) {
 }
 
 const server = http.createServer((req, res) => {
-  if (req.url === '/') {
-    const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(html);
-  }
+  const reqPath = req.url === '/' ? '/index.html' : decodeURIComponent(req.url);
+  const filePath = path.join(__dirname, 'public', reqPath);
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+    const types = {
+      '.html': 'text/html',
+      '.js': 'text/javascript',
+      '.css': 'text/css',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon'
+    };
+
+    const contentType = types[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(content);
+  });
 });
 
 server.on('upgrade', (req, socket) => {
