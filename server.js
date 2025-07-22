@@ -96,6 +96,10 @@ server.on('upgrade', (req, socket) => {
   ];
   socket.write(responseHeaders.join('\r\n') + '\r\n\r\n');
 
+  socket.on('error', (err) => {
+    console.error('WebSocket error:', err);
+  });
+
   socket.on('data', (buffer) => {
     const message = decodeMessage(buffer);
     if (!message) return;
