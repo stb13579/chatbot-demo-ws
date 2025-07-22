@@ -202,12 +202,15 @@
                 onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
               />
               <button
-                className="bg-primary-600 text-white px-4 py-1 rounded-r hover:bg-primary-700"
+                className="bg-primary-600 text-white px-4 py-1 rounded-r hover:bg-primary-700 w-20"
                 onClick={send}
               >
                 Send
               </button>
-              <text>You ask questions, we repeat them back to you! </text>
+              
+            </div>
+            <div className="text-center">
+              <p className="text-gray-500">You ask questions, we repeat them back to you!</p>
             </div>
           </div>
         );
