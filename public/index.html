@@ -161,7 +161,8 @@
         const wsRef = React.useRef(null);
 
         React.useEffect(() => {
-          wsRef.current = new WebSocket(`ws://${location.host}`);
+          const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+          wsRef.current = new WebSocket(`${protocol}://${location.host}`);
           wsRef.current.onmessage = (event) => {
             setMessages((msgs) => [...msgs, { from: 'bot', text: event.data }]);
           };
@@ -177,6 +178,7 @@
 
             return (
           <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-md">
+            <h1 className="text-2xl font-bold text-primary-700 mb-4 text-center">Parrot Health Chatbot</h1>
             <img src="parrot.svg" alt="Colorful cartoon parrot standing upright with a cheerful expression, set against a plain background" className="h-16 mx-auto mb-2" />
             <div className="h-64 overflow-y-auto mb-4 border border-gray-200 p-2 rounded">
               {messages.map((m, idx) => (
@@ -200,6 +202,7 @@
               >
                 Send
               </button>
+              <text>You ask questions, we repeat them back to you! </text>
             </div>
           </div>
         );
