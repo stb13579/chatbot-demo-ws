@@ -28,7 +28,10 @@ function encodeMessage(str) {
   return frame;
 }
 
-function decodeMessage(buffer) {
+function decodeFrame(buffer) {
+  const firstByte = buffer[0];
+  const opcode = firstByte & 0x0f;
+
   const secondByte = buffer[1];
   const isMasked = Boolean(secondByte & 0x80);
   let length = secondByte & 0x7f;
@@ -52,7 +55,11 @@ function decodeMessage(buffer) {
       payload[i] ^= mask[i % 4];
     }
   }
-  return payload.toString('utf8');
+  return { opcode, data: payload.toString('utf8') };
+}
+
+function encodeCloseFrame() {
+  return Buffer.from([0x88, 0x00]);
 }
 
 const server = http.createServer((req, res) => {
@@ -101,9 +108,17 @@ server.on('upgrade', (req, socket) => {
   });
 
   socket.on('data', (buffer) => {
-    const message = decodeMessage(buffer);
-    if (!message) return;
-    const reply = `PARROT: "${message}"`;
+    const { opcode, data } = decodeFrame(buffer);
+
+    if (opcode === 0x8 || (opcode === 0x1 && data.trim().toLowerCase() === 'close')) {
+      socket.write(encodeCloseFrame());
+      socket.end();
+      return;
+    }
+
+    if (opcode !== 0x1 || !data) return;
+
+    const reply = `PARROT: "${data}"`;
     const delay = Math.random() * 2000;
     setTimeout(() => {
       socket.write(encodeMessage(reply));

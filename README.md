@@ -15,6 +15,8 @@ node server.js
 
 Open your browser to `http://localhost:3000` and chat with the bot. Messages are echoed back with an "AI" prefix.
 
+To gracefully end a session, send the message `close` and the server will close the WebSocket connection.
+
 ## Running a Load Test
 
 To simulate thousands of concurrent connections, use [Gatling](https://gatling.io/) or a similar load testing tool. Point the WebSocket scenario at `ws://localhost:3000` and configure the desired number of virtual users.
