@@ -104,7 +104,10 @@ server.on('upgrade', (req, socket) => {
     const message = decodeMessage(buffer);
     if (!message) return;
     const reply = `PARROT: "${message}"`;
-    socket.write(encodeMessage(reply));
+    const delay = Math.random() * 2000;
+    setTimeout(() => {
+      socket.write(encodeMessage(reply));
+    }, delay);
   });
 });
 
