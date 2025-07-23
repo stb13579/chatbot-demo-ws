@@ -103,6 +103,18 @@ server.on('upgrade', (req, socket) => {
   ];
   socket.write(responseHeaders.join('\r\n') + '\r\n\r\n');
 
+  const timers = new Set();
+
+  const clearTimers = () => {
+    for (const t of timers) {
+      clearTimeout(t);
+    }
+    timers.clear();
+  };
+
+  socket.on('close', clearTimers);
+  socket.on('end', clearTimers);
+
   socket.on('error', (err) => {
     console.error('WebSocket error:', err);
   });
@@ -111,8 +123,11 @@ server.on('upgrade', (req, socket) => {
     const { opcode, data } = decodeFrame(buffer);
 
     if (opcode === 0x8 || (opcode === 0x1 && data.trim().toLowerCase() === 'close')) {
-      socket.write(encodeCloseFrame());
-      socket.end();
+      clearTimers();
+      if (!socket.writableEnded) {
+        socket.write(encodeCloseFrame());
+        socket.end();
+      }
       return;
     }
 
@@ -120,9 +135,13 @@ server.on('upgrade', (req, socket) => {
 
     const reply = `PARROT: "${data}"`;
     const delay = Math.random() * 2000;
-    setTimeout(() => {
-      socket.write(encodeMessage(reply));
+    const timer = setTimeout(() => {
+      timers.delete(timer);
+      if (!socket.writableEnded) {
+        socket.write(encodeMessage(reply));
+      }
     }, delay);
+    timers.add(timer);
   });
 });
 
