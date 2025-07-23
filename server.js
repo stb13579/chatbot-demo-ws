@@ -134,7 +134,7 @@ server.on('upgrade', (req, socket) => {
     if (opcode !== 0x1 || !data) return;
 
     const reply = `PARROT: "${data}"`;
-    const delay = Math.random() * 2000;
+    const delay = Math.random() * 10000;
     const timer = setTimeout(() => {
       timers.delete(timer);
       if (!socket.writableEnded) {
