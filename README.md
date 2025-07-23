@@ -19,4 +19,4 @@ To gracefully end a session, send the message `close` and the server will close 
 
 ## Running a Load Test
 
-To simulate thousands of concurrent connections, use [Gatling](https://gatling.io/) or a similar load testing tool. Point the WebSocket scenario at `ws://localhost:3000` and configure the desired number of virtual users.
+To simulate thousands of concurrent connections, use [Gatling](https://gatling.io/) or a similar load testing tool. Point the WebSocket scenario at `ws://localhost:3000` and configure the desired number of virtual users. There is a companion sample load test available [WebSockets JS load test](https://github.com/stb13579/WebSocketTestJS).
