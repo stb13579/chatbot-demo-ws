@@ -1,67 +1,9 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
+const WebSocket = require('ws');
 
-function createAcceptValue(key) {
-  return crypto
-    .createHash('sha1')
-    .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', 'binary')
-    .digest('base64');
-}
-
-function encodeMessage(str) {
-  const payload = Buffer.from(str);
-  const length = payload.length;
-  let frame;
-  if (length < 126) {
-    frame = Buffer.alloc(2 + length);
-    frame[1] = length;
-    payload.copy(frame, 2);
-  } else {
-    frame = Buffer.alloc(4 + length);
-    frame[1] = 126;
-    frame.writeUInt16BE(length, 2);
-    payload.copy(frame, 4);
-  }
-  frame[0] = 0x81; // FIN and text frame opcode
-  return frame;
-}
-
-function decodeFrame(buffer) {
-  const firstByte = buffer[0];
-  const opcode = firstByte & 0x0f;
-
-  const secondByte = buffer[1];
-  const isMasked = Boolean(secondByte & 0x80);
-  let length = secondByte & 0x7f;
-  let offset = 2;
-  if (length === 126) {
-    length = buffer.readUInt16BE(offset);
-    offset += 2;
-  } else if (length === 127) {
-    // Note: this simple example doesn't handle payloads larger than 2^32
-    length = Number(buffer.readBigUInt64BE(offset));
-    offset += 8;
-  }
-  let mask;
-  if (isMasked) {
-    mask = buffer.slice(offset, offset + 4);
-    offset += 4;
-  }
-  const payload = buffer.slice(offset, offset + length);
-  if (isMasked) {
-    for (let i = 0; i < payload.length; i++) {
-      payload[i] ^= mask[i % 4];
-    }
-  }
-  return { opcode, data: payload.toString('utf8') };
-}
-
-function encodeCloseFrame() {
-  return Buffer.from([0x88, 0x00]);
-}
-
+// HTTP server for serving static files
 const server = http.createServer((req, res) => {
   const reqPath = req.url === '/' ? '/index.html' : decodeURIComponent(req.url);
   const filePath = path.join(__dirname, 'public', reqPath);
@@ -69,12 +11,12 @@ const server = http.createServer((req, res) => {
   fs.readFile(filePath, (err, content) => {
     if (err) {
       res.writeHead(404);
-      res.end();
+      res.end('File not found');
       return;
     }
 
     const ext = path.extname(filePath).toLowerCase();
-    const types = {
+    const contentTypes = {
       '.html': 'text/html',
       '.js': 'text/javascript',
       '.css': 'text/css',
@@ -82,65 +24,51 @@ const server = http.createServer((req, res) => {
       '.ico': 'image/x-icon'
     };
 
-    const contentType = types[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'text/plain' });
     res.end(content);
   });
 });
 
-server.on('upgrade', (req, socket) => {
-  if (req.headers['upgrade'] !== 'websocket') {
-    socket.destroy();
-    return;
-  }
-  const acceptKey = req.headers['sec-websocket-key'];
-  const acceptValue = createAcceptValue(acceptKey);
-  const responseHeaders = [
-    'HTTP/1.1 101 Switching Protocols',
-    'Upgrade: websocket',
-    'Connection: Upgrade',
-    `Sec-WebSocket-Accept: ${acceptValue}`
-  ];
-  socket.write(responseHeaders.join('\r\n') + '\r\n\r\n');
+// WebSocket server
+const wss = new WebSocket.Server({ server });
 
+wss.on('connection', (ws) => {
+  console.log('Client connected');
   const timers = new Set();
 
-  const clearTimers = () => {
-    for (const t of timers) {
-      clearTimeout(t);
-    }
+  // Clean up timers when connection closes
+  const cleanup = () => {
+    timers.forEach(timer => clearTimeout(timer));
     timers.clear();
   };
 
-  socket.on('close', clearTimers);
-  socket.on('end', clearTimers);
-
-  socket.on('error', (err) => {
+  ws.on('close', cleanup);
+  ws.on('error', (err) => {
     console.error('WebSocket error:', err);
+    cleanup();
   });
 
-  socket.on('data', (buffer) => {
-    const { opcode, data } = decodeFrame(buffer);
-
-    if (opcode === 0x8 || (opcode === 0x1 && data.trim().toLowerCase() === 'close')) {
-      clearTimers();
-      if (!socket.writableEnded) {
-        socket.write(encodeCloseFrame());
-        socket.end();
-      }
+  ws.on('message', (data) => {
+    const message = data.toString();
+    
+    // Handle close command
+    if (message.trim().toLowerCase() === 'close') {
+      cleanup();
+      ws.close();
       return;
     }
 
-    if (opcode !== 0x1 || !data) return;
-
-    const reply = `PARROT: "${data}"`;
-    const delay = Math.random() * 10000;
+    // Echo back with random delay (0-10 seconds)
+    const reply = `PARROT: "${message}"`;
+    const delay = Math.random() * 5000;
+    
     const timer = setTimeout(() => {
       timers.delete(timer);
-      if (!socket.writableEnded) {
-        socket.write(encodeMessage(reply));
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(reply);
       }
     }, delay);
+    
     timers.add(timer);
   });
 });
