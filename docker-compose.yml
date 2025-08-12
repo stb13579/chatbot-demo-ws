@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+  ngrok:
+    image: ngrok/ngrok:latest
+    command: http app:3000
+    env_file:
+      - .env
+    depends_on:
+      - app

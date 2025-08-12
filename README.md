@@ -20,3 +20,17 @@ To gracefully end a session, send the message `close` and the server will close 
 ## Running a Load Test
 
 To simulate thousands of concurrent connections, use [Gatling](https://gatling.io/) or a similar load testing tool. Point the WebSocket scenario at `ws://localhost:3000` and configure the desired number of virtual users. There is a companion sample load test available [WebSockets JS load test](https://github.com/stb13579/WebSocketTestJS).
+
+## Docker and ngrok
+
+This repository includes a `Dockerfile` and `docker-compose.yml` to expose the server through [ngrok](https://ngrok.com) for remote load testing.
+
+1. Create an ngrok account and obtain an auth token.
+2. Copy `.env.example` to `.env` and add your token: `NGROK_AUTHTOKEN=<token>`.
+3. Start the stack:
+
+```bash
+docker compose up --build
+```
+
+The ngrok service will print a forwarding URL such as `https://XXXX.ngrok-free.app`. Use this URL in your remote load testing tool to target the WebSocket server.
