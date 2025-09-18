@@ -3,10 +3,11 @@ import { http, ws } from "@gatling.io/http";
 
 export default simulation((setUp) => {
 
+  const BASE_URL = getParameter("baseUrl", "http://localhost:3000");
   const questionsFeeder = csv("resources/health_insurance_chatbot_questions.csv").random(); // Load the CSV file with questions
 
   const httpProtocol = http
-  .baseUrl("http://localhost:3000")
+  .baseUrl(BASE_URL)
   .acceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
   .doNotTrackHeader("1")
   .acceptLanguageHeader("en-US,en;q=0.5")
