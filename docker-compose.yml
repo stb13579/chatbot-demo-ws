@@ -1,13 +1,15 @@
 version: "3.9"
 services:
   app:
-    build: .
+    build:
+      context: .                         # Build context is the root of the repo
+      dockerfile: /Dockerfile  # Explicit Dockerfile p
     ports:
       - "3000:3000"
   ngrok:
     image: ngrok/ngrok:latest
     command: http app:3000
-    env_file:
-      - .env
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     depends_on:
       - app
