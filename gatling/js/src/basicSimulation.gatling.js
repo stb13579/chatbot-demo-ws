@@ -114,14 +114,23 @@ export default simulation((setUp) => {
       ws("Connect WS").connect("/"),
       /**
        * Pauses for 1 second.
-       */
+      */
       pause(1),
+      /**
+       * Determines a random number of customer questions for this session.
+       *
+       * @param {Session} session - The Gatling session object.
+       * @returns {Session} The updated session with a random question count.
+       */
+      exec((session) =>
+        session.set("maxQuestions", Math.floor(Math.random() * 10) + 1),
+      ),
       /**
        * Repeats sending customer questions and awaiting chatbot responses.
        *
        * @param {number} i - The iteration index.
        */
-      repeat(5, "i").on(
+      repeat((session) => session.get("maxQuestions"), "i").on(
         feed(questionsFeeder),
         /**
          * Sends a user question over WebSocket and awaits a response.
